@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Click Fast!</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .view {
+      display: none;
+    }
+
+    #view-home {
+      display: block;
+    }
+
+    #arena {
+      width: 500px;
+      height: 500px;
+      border: 2px solid #000;
+      position: relative;
+      margin: 15px auto;
+      background: #eee;
+    }
+
+    #target {
+      position: absolute;
+      background-color: red;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .hud {
+      display: flex;
+      justify-content: space-around;
+      width: 500px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <div id="view-home" class="view">
+    <h1>Click Fast!</h1>
+    <button id="btn-to-config">Jouer</button>
+    <button id="btn-to-history">Historique</button>
+  </div>
+
+  <div id="view-config" class="view">
+    <h2>Configuration</h2>
+    <form id="config-form">
+      <p>
+        <input type="text" id="pseudo" placeholder="Pseudo" value="Joueur">
+      </p>
+      <p>
+        <select id="mode">
+          <option value="Classique">Classique</option>
+          <option value="Précision">Précision</option>
+        </select>
+      </p>
+      <p>
+        <select id="duration">
+          <option value="10">10s</option>
+          <option value="20">20s</option>
+          <option value="30">30s</option>
+        </select>
+      </p>
+      <p>
+        <select id="difficulty">
+          <option value="Facile">Facile</option>
+          <option value="Moyenne" selected>Moyenne</option>
+          <option value="Difficile">Difficile</option>
+        </select>
+      </p>
+      <button type="submit">Lancer</button>
+    </form>
+  </div>
+
+  <div id="view-game" class="view">
+    <div class="hud">
+      <span>Temps: <b id="hud-timer">0</b>s</span>
+      <span>Score: <b id="hud-score">0</b></span>
+      <span>Ratés: <b id="hud-misses">0</b></span>
+      <span>Précision: <b id="hud-accuracy">100%</b></span>
+    </div>
+    <div id="arena">
+      <div id="target"></div>
+    </div>
+  </div>
+
+  <div id="view-results" class="view">
+    <h2>Résultats</h2>
+    <p>Joueur: <b id="res-pseudo"></b></p>
+    <p>Score: <b id="res-score"></b></p>
+    <p>Ratés: <b id="res-rates"></b></p>
+    <p>Précision: <b id="res-accuracy"></b></p>
+    <p id="res-record-badge" style="display:none; color:green;">Nouveau Record !</p>
+    <button id="btn-replay">Rejouer</button>
+    <button id="btn-to-menu">Menu</button>
+  </div>
+
+  <div id="view-history" class="view">
+    <h2>Historique</h2>
+    <div id="history-list"></div>
+    <button id="btn-history-back">Retour</button>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+
+</html>
