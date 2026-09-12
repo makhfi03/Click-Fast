@@ -5,10 +5,76 @@ let monChrono = null;
 let tempsFin = 0;
 
 const target = document.getElementById("target");
+const arena = document.getElementById("arena");
+
+function sauvegarderReglages() {
+  const reglages = {
+    pseudo: document.getElementById("pseudo").value || "Joueur",
+    mode: document.getElementById("mode").value,
+    duration: document.getElementById("duration").value,
+    difficulty: document.getElementById("difficulty").value
+  };
+  localStorage.setItem("clickFast.settings", JSON.stringify(reglages));
+}
+
+function chargerReglages() {
+  try {
+    const donnees = localStorage.getItem("clickFast.settings");
+    if (!donnees) return;
+    const reglages = JSON.parse(donnees);
+
+    if (reglages.pseudo) document.getElementById("pseudo").value = reglages.pseudo;
+    if (reglages.mode) document.getElementById("mode").value = reglages.mode;
+    if (reglages.duration) document.getElementById("duration").value = reglages.duration;
+    if (reglages.difficulty) document.getElementById("difficulty").value = reglages.difficulty;
+  } catch (e) {
+    console.log("Problème d'accès au localStorage");
+  }
+}
+
+function sauvegarderHistorique(session) {
+  try {
+    let historique = JSON.parse(localStorage.getItem("clickFast.history")) || [];
+    historique.unshift(session);
+    if (historique.length > 20) {
+      historique = historique.slice(0, 20);
+    }
+    localStorage.setItem("clickFast.history", JSON.stringify(historique));
+  } catch (e) {
+    console.log("Erreur de sauvegarde dans l'historique");
+  }
+}
+
+function afficherHistorique() {
+  const container = document.getElementById("history-list");
+  container.innerHTML = ""; 
+
+  try {
+    const historique = JSON.parse(localStorage.getItem("clickFast.history")) || [];
+
+    if (historique.length === 0) {
+      container.innerHTML = "<p>Aucune partie enregistrée.</p>";
+      return;
+    }
+
+    historique.forEach((session) => {
+      const p = document.createElement("p");
+
+      if (session.mode === "Classique") {
+        p.textContent = `${session.pseudo} - Mode: ${session.mode} | Score: ${session.score}`;
+      } else {
+        p.textContent = `${session.pseudo} - Mode: ${session.mode} | Score: ${session.score} | Ratés: ${session.rates}`;
+      }
+
+      container.appendChild(p);
+    });
+  } catch (e) {
+    console.log("Erreur lors de l'affichage de l'historique");
+  }
+}
 
 function bougerCible() {
   const difficulte = document.getElementById("difficulty").value;
-
   let taille = 60;
 
   if (difficulte === "Facile") {
@@ -17,8 +83,10 @@ function bougerCible() {
     taille = 40;
   }
 
-  const x = Math.floor(Math.random() * (500 - taille));
-  const y = Math.floor(Math.random() * (500 - taille));
+  const arenaSize = arena.clientWidth || 500;
+  const maxPosition = Math.max(0, arenaSize - taille);
+  const x = Math.floor(Math.random() * maxPosition);
+  const y = Math.floor(Math.random() * maxPosition);
 
   target.style.width = taille + "px";
   target.style.height = taille + "px";
@@ -67,11 +135,21 @@ function arreterPartie() {
   partieEnCours = false;
   clearInterval(monChrono);
 
+  sauvegarderReglages();
+
   const mode = document.getElementById("mode").value;
   const pseudo = document.getElementById("pseudo").value || "Joueur";
 
   document.getElementById("res-pseudo").textContent = pseudo;
   document.getElementById("res-score").textContent = score;
+
+  const rateContainer = document.getElementById("res-rates").parentElement;
+  if (mode === "Classique") {
+    rateContainer.style.display = "none";
+  } else {
+    rateContainer.style.display = "block";
+    document.getElementById("res-rates").textContent = rates;
+  }
 
   const precisionContainer = document.getElementById("res-accuracy").parentElement;
   if (mode === "Classique") {
@@ -83,24 +161,19 @@ function arreterPartie() {
     document.getElementById("res-accuracy").textContent = calcul;
   }
 
-  const rateContainer = document.getElementById("res-rates").parentElement;
-  if (mode === "Classique") {
-    rateContainer.style.display = "none";
-  } else {
-    rateContainer.style.display = "block";
-    document.getElementById("res-rates").textContent = rates;
-  }
+  const sessionActuelle = {
+    pseudo: pseudo,
+    mode: mode,
+    score: score,
+    rates: rates
+  };
+  sauvegarderHistorique(sessionActuelle);
 
   document.getElementById("view-game").style.display = "none";
   document.getElementById("view-results").style.display = "block";
 }
 
 target.addEventListener("click", function (e) {
-  e.stopPropagation();
-  bougerCible();
-});
-
-document.getElementById("target").addEventListener("click", function (e) {
   e.stopPropagation();
   if (!partieEnCours || performance.now() > tempsFin) return;
 
@@ -124,15 +197,8 @@ document.getElementById("arena").addEventListener("click", function () {
   }
 });
 
-document.getElementById("config-form").addEventListener("submit", function (e) {
-  e.preventDefault();
-  document.getElementById("view-config").style.display = "none";
-  document.getElementById("view-game").style.display = "block";
-
-  lancerPartie();
-});
-
 document.addEventListener("DOMContentLoaded", () => {
+  chargerReglages();
   bougerCible();
 
   const viewHome = document.getElementById("view-home");
@@ -148,19 +214,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   configForm.addEventListener("submit", (e) => {
     e.preventDefault();
-
     viewConfig.style.display = "none";
     viewGame.style.display = "block";
+    lancerPartie();
+  });
+
+  document.getElementById("btn-config-back").addEventListener("click", () => {
+    viewConfig.style.display = "none";
+    viewHome.style.display = "block";
   });
 
   document.getElementById("btn-to-history").addEventListener("click", () => {
     viewHome.style.display = "none";
     viewHistory.style.display = "block";
+    afficherHistorique();
   });
 
   document.getElementById("btn-history-back").addEventListener("click", () => {
     viewHistory.style.display = "none";
     viewHome.style.display = "block";
+  });
+
+  document.getElementById("btn-replay").addEventListener("click", () => {
+    document.getElementById("view-results").style.display = "none";
+    viewGame.style.display = "block";
+    lancerPartie();
   });
 
   document.getElementById("btn-to-menu").addEventListener("click", () => {
